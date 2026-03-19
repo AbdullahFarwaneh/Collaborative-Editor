@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+</head>
+<body>
+<textarea id="code" rows="10" cols="50"></textarea>
+<br>
+<button onclick="sendCode()">Send</button>
+<p>Received: <span id="output"></span></p>
+
+<script>
+    var sessionId = 1;
+    var socket = new SockJS('http://localhost:8080/ws');
+    var stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, function() {
+        console.log('Connected!');
+
+
+        stompClient.subscribe('/topic/editor/' + sessionId, function(message) {
+            document.getElementById('output').innerHTML = message.body;
+        });
+    });
+
+    function sendCode() {
+        var code = document.getElementById('code').value;
+        stompClient.send('/app/editor/' + sessionId, {}, code);
+    }
+</script>
+</body>
+</html>
