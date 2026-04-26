@@ -10,7 +10,6 @@ similar to CoderPad or Google Docs for code.
 - Real-time code synchronization using WebSockets and STOMP
 - JWT authentication (register, login, protected endpoints)
 - Session management (create, join, share sessions)
-- Sandboxed code execution using Docker containers
 - Each participant gets a unique cursor color
 - Code persisted in PostgreSQL database
 
@@ -21,12 +20,11 @@ similar to CoderPad or Google Docs for code.
 - Spring Data JPA + Hibernate
 - PostgreSQL
 - WebSockets + STOMP
-- Docker
+ 
 
 ## Architecture
 - REST API for auth and session management
 - WebSocket for real-time code broadcasting
-- Docker containers for safe code execution
 - JWT tokens for stateless authentication
 
 ## Endpoints
