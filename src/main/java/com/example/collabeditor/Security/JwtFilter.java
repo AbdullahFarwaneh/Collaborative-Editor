@@ -1,6 +1,5 @@
 package com.example.collabeditor.Security;
 
-import com.example.collabeditor.Security.JwtUtil;
 import com.example.collabeditor.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -42,14 +41,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
                 Long userId = jwtUtil.extractUserId(token);
 
-     userRepository.findById(userId).ifPresent(user -> {
-       UsernamePasswordAuthenticationToken auth =
-              new UsernamePasswordAuthenticationToken(
-                    user, null, List.of()
-                            );
-               SecurityContextHolder.getContext()
-                   .setAuthentication(auth);
-                            });
+                userRepository.findById(userId).ifPresent(user -> {
+                    UsernamePasswordAuthenticationToken auth =
+                            new UsernamePasswordAuthenticationToken(user, null, List.of());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                });
             }
         }
 

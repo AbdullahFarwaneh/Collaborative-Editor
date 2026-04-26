@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Collab Editor</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111a2e;
+      --panel2: #0f172a;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #22c55e;
+      --danger: #ef4444;
+      --border: rgba(255,255,255,0.08);
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 20% 10%, rgba(34,197,94,0.12), transparent 60%),
+                  radial-gradient(900px 500px at 80% 0%, rgba(59,130,246,0.12), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+    }
+    header {
+      padding: 18px 18px 10px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(to bottom, rgba(17,26,46,0.85), rgba(17,26,46,0.55));
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0.4px;
+      font-weight: 700;
+    }
+    header .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,0.6);
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--danger);
+      box-shadow: 0 0 0 4px rgba(239,68,68,0.12);
+    }
+    .dot.ok {
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(34,197,94,0.14);
+    }
+    main {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 16px;
+      padding: 16px;
+      align-items: start;
+    }
+    @media (max-width: 980px) {
+      main { grid-template-columns: 1fr; }
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(17,26,46,0.75);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card .hd {
+      padding: 12px 12px 10px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15,23,42,0.55);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .card .hd h2 {
+      margin: 0;
+      font-size: 13px;
+      color: #dbeafe;
+      letter-spacing: 0.25px;
+    }
+    .card .bd { padding: 12px; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .row + .row { margin-top: 10px; }
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,0.75);
+      color: var(--text);
+      outline: none;
+      font-size: 13px;
+    }
+    textarea {
+      font-family: var(--mono);
+      line-height: 1.45;
+      min-height: 520px;
+      resize: vertical;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(34,197,94,0.45);
+      box-shadow: 0 0 0 4px rgba(34,197,94,0.12);
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,0.8);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    button.primary {
+      border-color: rgba(34,197,94,0.35);
+      background: rgba(34,197,94,0.16);
+    }
+    button.danger {
+      border-color: rgba(239,68,68,0.35);
+      background: rgba(239,68,68,0.14);
+    }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .small { font-size: 12px; }
+    .hr { height: 1px; background: var(--border); margin: 12px 0; }
+    .list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .item {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(15,23,42,0.55);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+    .item .meta { display: grid; gap: 2px; }
+    .item .meta b { font-size: 13px; }
+    .item .meta span { color: var(--muted); font-size: 12px; }
+    .toast {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      max-width: 520px;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,0.85);
+      box-shadow: var(--shadow);
+      display: none;
+      white-space: pre-wrap;
+      font-family: var(--sans);
+      font-size: 13px;
+      color: var(--text);
+    }
+    .split {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: start;
+    }
+    .rightMeta {
+      display: grid;
+      gap: 8px;
+      min-width: 230px;
+    }
+    .badge {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,0.55);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .badge b { color: var(--text); }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+</head>
+<body>
+<header>
+  <h1>Collaborative Editor</h1>
+  <div class="sub">
+    <span class="pill"><span id="authDot" class="dot"></span><span id="authState">Not logged in</span></span>
+    <span class="pill"><span id="wsDot" class="dot"></span><span id="wsState">WebSocket: disconnected</span></span>
+    <span class="pill">Session: <b id="currentSession">none</b></span>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="hd">
+      <h2>Account</h2>
+      <div class="actions">
+        <button id="btnLogout" class="danger" disabled>Logout</button>
+      </div>
+    </div>
+    <div class="bd">
+      <div class="row">
+        <div>
+          <label>Name (register)</label>
+          <input id="regName" placeholder="Your name" />
+        </div>
+        <div>
+          <label>Email</label>
+          <input id="regEmail" placeholder="you@example.com" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Password</label>
+          <input id="regPassword" type="password" placeholder="••••••••" />
+        </div>
+        <div class="actions" style="align-self:end;">
+          <button id="btnRegister">Register</button>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <div>
+          <label>Email (login)</label>
+          <input id="loginEmail" placeholder="you@example.com" />
+        </div>
+        <div>
+          <label>Password</label>
+          <input id="loginPassword" type="password" placeholder="••••••••" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="actions">
+          <button id="btnLogin" class="primary">Login</button>
+          <button id="btnPing">Load sessions</button>
+        </div>
+        <div class="muted" style="align-self:center;">
+          Token saved in browser storage.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="hd">
+      <h2>Editor</h2>
+      <div class="actions">
+        <button id="btnConnect" disabled>Connect WS</button>
+        <button id="btnDisconnect" disabled>Disconnect WS</button>
+      </div>
+    </div>
+    <div class="bd">
+      <div class="split">
+        <div>
+          <label>Code</label>
+          <textarea id="code" spellcheck="false" placeholder="Join a session, then start typing..."></textarea>
+        </div>
+        <div class="rightMeta">
+          <div class="badge"><span>Me:</span> <b id="meLabel">anonymous</b></div>
+          <div class="badge"><span>Cursor:</span> <b id="cursorLabel">-</b></div>
+          <div class="badge"><span>Last send:</span> <b id="sendLabel">-</b></div>
+          <div class="badge"><span>Remote cursors:</span> <b id="remoteCount">0</b></div>
+          <div id="remoteList" class="list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="hd">
+      <h2>Sessions</h2>
+      <div class="actions">
+        <button id="btnRefreshSessions">Refresh</button>
+      </div>
+    </div>
+    <div class="bd">
+      <div class="row">
+        <div>
+          <label>Title</label>
+          <input id="sessTitle" placeholder="My session" />
+        </div>
+        <div>
+          <label>Language</label>
+          <select id="sessLang">
+            <option value="java">Java</option>
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+            <option value="c++">C++</option>
+            <option value="sql">SQL</option>
+            <option value="text">Text</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="actions">
+          <button id="btnCreateSession" class="primary">Create session</button>
+        </div>
+        <div class="muted" style="align-self:center;">
+          Create → Join → Type to broadcast.
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="muted small">Your sessions</div>
+      <div id="sessions" class="list"></div>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  // Simple (no build tools) front-end that talks to your Spring Boot backend.
+  // Open this page from the running app: http://localhost:8080/editor.html
+
+  var state = {
+    token: null,
+    email: null,
+    name: null,
+    sessionId: null,
+    stomp: null,
+    connected: false,
+    suppressLocalEcho: false,
+    lastSentAt: null,
+    remoteCursors: {} // sender -> {line, column, at}
+  };
+
+  function $(id) { return document.getElementById(id); }
+
+  function setDot(id, ok) {
+    var el = $(id);
+    el.classList.toggle("ok", !!ok);
+  }
+
+  function toast(msg) {
+    var el = $("toast");
+    el.textContent = msg;
+    el.style.display = "block";
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.style.display = "none"; }, 4200);
+  }
+
+  function authHeaders() {
+    if (!state.token) return { "Content-Type": "application/json" };
+    return { "Content-Type": "application/json", "Authorization": "Bearer " + state.token };
+  }
+
+  function saveAuth() {
+    localStorage.setItem("collab_token", state.token || "");
+    localStorage.setItem("collab_email", state.email || "");
+    localStorage.setItem("collab_name", state.name || "");
+  }
+
+  function loadAuth() {
+    var t = localStorage.getItem("collab_token");
+    state.token = t && t.length ? t : null;
+    var e = localStorage.getItem("collab_email");
+    state.email = e && e.length ? e : null;
+    var n = localStorage.getItem("collab_name");
+    state.name = n && n.length ? n : null;
+  }
+
+  function updateHeader() {
+    var loggedIn = !!state.token;
+    setDot("authDot", loggedIn);
+    $("authState").textContent = loggedIn ? ("Logged in: " + (state.email || "user")) : "Not logged in";
+
+    setDot("wsDot", state.connected);
+    $("wsState").textContent = state.connected ? "WebSocket: connected" : "WebSocket: disconnected";
+
+    $("currentSession").textContent = state.sessionId ? String(state.sessionId) : "none";
+    $("btnLogout").disabled = !loggedIn;
+    $("btnConnect").disabled = !loggedIn || !state.sessionId || state.connected;
+    $("btnDisconnect").disabled = !state.connected;
+    $("meLabel").textContent = state.email || "anonymous";
+  }
+
+  function cursorFromSelection(text, index) {
+    var line = 1;
+    var col = 1;
+    for (var i = 0; i < index && i < text.length; i++) {
+      if (text.charAt(i) === "\n") { line++; col = 1; }
+      else { col++; }
+    }
+    return { line: line, column: col };
+  }
+
+  var editDebounce = null;
+  function scheduleEditSend() {
+    if (!state.connected || !state.sessionId || !state.stomp) return;
+    clearTimeout(editDebounce);
+    editDebounce = setTimeout(function () {
+      sendEditorMessage("EDIT");
+    }, 160);
+  }
+
+  function updateCursorAndSend() {
+    var ta = $("code");
+    var pos = ta.selectionStart || 0;
+    var c = cursorFromSelection(ta.value, pos);
+    $("cursorLabel").textContent = "L" + c.line + ":C" + c.column;
+
+    if (state.connected) {
+      sendEditorMessage("CURSOR", c.line, c.column, true);
+    }
+  }
+
+  function sendEditorMessage(type, line, column, skipContent) {
+    if (!state.connected || !state.sessionId || !state.stomp) return;
+
+    var content = skipContent ? "" : $("code").value;
+    var msg = {
+      sender: state.email || "user",
+      content: content,
+      type: type,
+      line: line || 0,
+      column: column || 0
+    };
+
+    try {
+      state.stomp.send("/app/editor/" + state.sessionId, {}, JSON.stringify(msg));
+      state.lastSentAt = new Date();
+      $("sendLabel").textContent = state.lastSentAt.toLocaleTimeString();
+    } catch (e) {
+      toast("Send failed: " + (e && e.message ? e.message : String(e)));
+    }
+  }
+
+  function renderRemoteCursors() {
+    var list = $("remoteList");
+    list.innerHTML = "";
+    var keys = Object.keys(state.remoteCursors);
+    $("remoteCount").textContent = String(keys.length);
+
+    keys.sort().forEach(function (sender) {
+      var c = state.remoteCursors[sender];
+      var div = document.createElement("div");
+      div.className = "item";
+      var meta = document.createElement("div");
+      meta.className = "meta";
+      var b = document.createElement("b");
+      b.textContent = sender;
+      var s = document.createElement("span");
+      s.textContent = "L" + c.line + ":C" + c.column;
+      meta.appendChild(b);
+      meta.appendChild(s);
+      div.appendChild(meta);
+      list.appendChild(div);
+    });
+  }
+
+  function wsConnect() {
+    if (!state.sessionId) { toast("Pick a session first"); return; }
+    if (!state.token) { toast("Login first"); return; }
+    if (state.connected) return;
+
+    var socket = new SockJS("/ws");
+    var stomp = Stomp.over(socket);
+    stomp.debug = null;
+
+    stomp.connect({}, function () {
+      state.stomp = stomp;
+      state.connected = true;
+      updateHeader();
+
+      stomp.subscribe("/topic/editor/" + state.sessionId, function (frame) {
+        var body = frame && frame.body ? frame.body : "";
+        try {
+          var msg = JSON.parse(body);
+          if (msg && msg.type === "EDIT" && typeof msg.content === "string") {
+            var isMe = (msg.sender && state.email && msg.sender === state.email);
+            if (!isMe) {
+              state.suppressLocalEcho = true;
+              $("code").value = msg.content;
+              state.suppressLocalEcho = false;
+            }
+          }
+        } catch (e) {
+          // If backend sends plain strings, fallback to raw text.
+          if (typeof body === "string" && body.length) {
+            state.suppressLocalEcho = true;
+            $("code").value = body;
+            state.suppressLocalEcho = false;
+          }
+        }
+      });
+
+      stomp.subscribe("/topic/cursor/" + state.sessionId, function (frame) {
+        var body = frame && frame.body ? frame.body : "";
+        try {
+          var msg = JSON.parse(body);
+          if (msg && msg.type === "CURSOR" && msg.sender) {
+            if (state.email && msg.sender === state.email) return;
+            state.remoteCursors[msg.sender] = {
+              line: msg.line || 0,
+              column: msg.column || 0,
+              at: Date.now()
+            };
+            renderRemoteCursors();
+          }
+        } catch (e) {}
+      });
+
+      toast("WebSocket connected (session " + state.sessionId + ")");
+    }, function (err) {
+      state.connected = false;
+      state.stomp = null;
+      updateHeader();
+      toast("WebSocket error: " + (err && err.body ? err.body : JSON.stringify(err)));
+    });
+  }
+
+  function wsDisconnect() {
+    try {
+      if (state.stomp) state.stomp.disconnect();
+    } catch (e) {}
+    state.stomp = null;
+    state.connected = false;
+    updateHeader();
+  }
+
+  function requireAuth() {
+    if (!state.token) {
+      toast("Login first");
+      throw new Error("Not logged in");
+    }
+  }
+
+  function api(path, method, bodyObj) {
+    requireAuth();
+    var opts = { method: method, headers: authHeaders() };
+    if (bodyObj) opts.body = JSON.stringify(bodyObj);
+    return fetch(path, opts).then(function (r) {
+      return r.text().then(function (t) {
+        var data = null;
+        try { data = t && t.length ? JSON.parse(t) : null; } catch (e) { data = t; }
+        if (!r.ok) {
+          var msg = (data && data.message) ? data.message : (typeof data === "string" ? data : "Request failed");
+          throw new Error(r.status + " " + msg);
+        }
+        return data;
+      });
+    });
+  }
+
+  function refreshSessions() {
+    return api("/api/sessions", "GET").then(function (sessions) {
+      var container = $("sessions");
+      container.innerHTML = "";
+      if (!sessions || !sessions.length) {
+        var empty = document.createElement("div");
+        empty.className = "muted";
+        empty.textContent = "No sessions yet. Create one.";
+        container.appendChild(empty);
+        return;
+      }
+      sessions.forEach(function (s) {
+        var div = document.createElement("div");
+        div.className = "item";
+
+        var meta = document.createElement("div");
+        meta.className = "meta";
+        var title = document.createElement("b");
+        title.textContent = (s.title || "Session") + "  (#" + s.id + ")";
+        var lang = document.createElement("span");
+        lang.textContent = "Language: " + (s.language || "-");
+        meta.appendChild(title);
+        meta.appendChild(lang);
+
+        var btn = document.createElement("button");
+        btn.className = "primary";
+        btn.textContent = "Join";
+        btn.onclick = function () { joinSession(s.id); };
+
+        div.appendChild(meta);
+        div.appendChild(btn);
+        container.appendChild(div);
+      });
+    }).catch(function (e) {
+      toast("Load sessions failed: " + e.message);
+    });
+  }
+
+  function createSession() {
+    var title = $("sessTitle").value || "Untitled";
+    var language = $("sessLang").value || "text";
+    return api("/api/sessions", "POST", { title: title, language: language })
+      .then(function (s) {
+        toast("Created session #" + s.id);
+        return refreshSessions();
+      })
+      .catch(function (e) { toast("Create session failed: " + e.message); });
+  }
+
+  function joinSession(id) {
+    return api("/api/sessions/" + id + "/join", "POST")
+      .then(function () {
+        state.sessionId = id;
+        updateHeader();
+        wsDisconnect();
+        wsConnect();
+      })
+      .catch(function (e) { toast("Join failed: " + e.message); });
+  }
+
+  function register() {
+    var name = $("regName").value;
+    var email = $("regEmail").value;
+    var password = $("regPassword").value;
+    if (!name || !email || !password) { toast("Fill name, email, password"); return; }
+    fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name, email: email, password: password })
+    }).then(function (r) { return r.text().then(function (t) { return { ok: r.ok, text: t }; }); })
+      .then(function (res) {
+        if (!res.ok) { toast("Register failed: " + res.text); return; }
+        toast("Registered. Now login.");
+        $("loginEmail").value = email;
+      })
+      .catch(function (e) { toast("Register error: " + e.message); });
+  }
+
+  function login() {
+    var email = $("loginEmail").value;
+    var password = $("loginPassword").value;
+    if (!email || !password) { toast("Fill email and password"); return; }
+    fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email, password: password })
+    }).then(function (r) { return r.text().then(function (t) { return { ok: r.ok, text: t }; }); })
+      .then(function (res) {
+        if (!res.ok) { toast("Login failed: " + res.text); return; }
+        var data = JSON.parse(res.text);
+        state.token = data.token;
+        state.email = email;
+        state.name = email.split("@")[0];
+        saveAuth();
+        updateHeader();
+        toast("Logged in");
+        refreshSessions();
+      })
+      .catch(function (e) { toast("Login error: " + e.message); });
+  }
+
+  function logout() {
+    wsDisconnect();
+    state.token = null;
+    state.email = null;
+    state.name = null;
+    state.sessionId = null;
+    state.remoteCursors = {};
+    renderRemoteCursors();
+    saveAuth();
+    updateHeader();
+    toast("Logged out");
+  }
+
+  function wireEvents() {
+    $("btnRegister").onclick = register;
+    $("btnLogin").onclick = login;
+    $("btnLogout").onclick = logout;
+    $("btnRefreshSessions").onclick = refreshSessions;
+    $("btnCreateSession").onclick = createSession;
+    $("btnPing").onclick = refreshSessions;
+    $("btnConnect").onclick = wsConnect;
+    $("btnDisconnect").onclick = wsDisconnect;
+
+    $("code").addEventListener("input", function () {
+      if (state.suppressLocalEcho) return;
+      scheduleEditSend();
+    });
+    $("code").addEventListener("click", updateCursorAndSend);
+    $("code").addEventListener("keyup", updateCursorAndSend);
+    $("code").addEventListener("select", updateCursorAndSend);
+  }
+
+  (function init() {
+    loadAuth();
+    updateHeader();
+    wireEvents();
+    if (state.token) refreshSessions();
+  })();
+</script>
+</body>
+</html>
+

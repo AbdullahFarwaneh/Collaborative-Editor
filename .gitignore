@@ -1,2 +1,8 @@
 src/main/resources/application.properties
 target/
+.idea/
+*.iml
+.mvn-repo/
+_cleanup_backup/
+_pkg_backup_*/
+_flatten_backup_*/

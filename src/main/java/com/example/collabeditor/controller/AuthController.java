@@ -1,5 +1,6 @@
 package com.example.collabeditor.controller;
 
+import com.example.collabeditor.dto.RegisterRequest;
 import com.example.collabeditor.model.User;
 import com.example.collabeditor.repository.UserRepository;
 import com.example.collabeditor.Security.JwtUtil;
@@ -27,11 +28,21 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequest body) {
+        if (body.getName() == null || body.getName().isBlank()
+                || body.getEmail() == null || body.getEmail().isBlank()
+                || body.getPassword() == null || body.getPassword().isBlank()) {
+            return ResponseEntity.badRequest().body("Missing name/email/password");
+        }
+
+        if (userRepository.findByEmail(body.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("Email already exists");
         }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        User user = new User();
+        user.setName(body.getName());
+        user.setEmail(body.getEmail());
+        user.setPassword(passwordEncoder.encode(body.getPassword()));
         userRepository.save(user);
         return ResponseEntity.ok("Registered successfully");
     }

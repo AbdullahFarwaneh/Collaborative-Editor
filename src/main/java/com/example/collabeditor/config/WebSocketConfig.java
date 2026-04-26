@@ -21,7 +21,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
                 // note for me :stomp is the rules for where the message should go
                 .setAllowedOriginPatterns("*", "null", "file://")
-                // some of the old browser dosent interact with websocket
+                // some of the old browsers donset interact with websocket
                 .withSockJS();
     }
 }
