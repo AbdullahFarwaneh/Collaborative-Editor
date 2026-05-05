@@ -1,10 +1,8 @@
 # Collaborative-Editor
-Real-time collaborative code editor with JWT authentication,  WebSocket live sync,
-and sandboxed code execution using Docker.
+Real-time collaborative code editor with JWT authentication,  WebSocket live sync.
 
 built with Java and Spring Boot.
-Multiple users can edit code simultaneously in shared sessions,
-similar to CoderPad or Google Docs for code.
+Multiple users can edit code simultaneously in shared sessions.
 
 ## Features
 - Real-time code synchronization using WebSockets and STOMP
